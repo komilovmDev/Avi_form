@@ -29,7 +29,10 @@ import {
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
+  TestTube,
 } from "lucide-react"
+import { TestResultsTable } from "@/components/test-results-table"
+import { SerologicalTestTable } from "@/components/serological-test-table"
 import { PDFDocument } from "@/components/pdf-document"
 import { pdf } from "@react-pdf/renderer"
 import { useState, useRef } from "react"
@@ -59,6 +62,12 @@ const STEPS = [
     title: "Объективное обследование",
     description: "Заполняет врач",
     icon: Stethoscope,
+  },
+  {
+    id: 5,
+    title: "Результаты анализов",
+    description: "Лабораторные данные",
+    icon: TestTube,
   },
 ]
 
@@ -108,6 +117,101 @@ export default function HomePage() {
       lungAuscultation: "",
       heartAuscultation: "",
       abdomenAuscultation: "",
+      // Результаты анализов - все поля пустые по умолчанию
+      oak_wbc: "",
+      oak_rbc: "",
+      oak_hgb: "",
+      oak_hct: "",
+      oak_mcv: "",
+      oak_mch: "",
+      oak_mchc: "",
+      oak_rdw_cv: "",
+      oak_rdw_sd: "",
+      oak_plt: "",
+      oak_pct: "",
+      oak_mpv: "",
+      oak_pdw: "",
+      oam_color: "",
+      oam_transparency: "",
+      oam_sediment: "",
+      oam_ph_reaction: "",
+      oam_bilirubin: "",
+      oam_urobilinogen: "",
+      oam_ketones: "",
+      oam_ascorbic_acid: "",
+      oam_glucose: "",
+      oam_protein: "",
+      oam_blood: "",
+      oam_ph: "",
+      oam_nitrites: "",
+      oam_leukocytes_digital: "",
+      oam_specific_gravity: "",
+      oam_epithelium: "",
+      oam_leukocytes_microscopy: "",
+      oam_erythrocytes_unchanged: "",
+      oam_erythrocytes_changed: "",
+      oam_bacteria: "",
+      oam_mucus: "",
+      bio_bilt: "",
+      bio_bild: "",
+      bio_ast: "",
+      bio_alt: "",
+      bio_urea: "",
+      bio_crea: "",
+      bio_tp: "",
+      bio_alb: "",
+      bio_alp: "",
+      bio_amy: "",
+      bio_glue: "",
+      bio_ldh: "",
+      bio_glob: "",
+      bio_alb_glob: "",
+      bio_ritis: "",
+      imm_cd3: "",
+      imm_cd3_hla_dr: "",
+      imm_cd4_cd8_minus: "",
+      imm_cd4_minus_cd8: "",
+      imm_cd4_cd8_ratio: "",
+      imm_cd3_minus_cd8: "",
+      imm_cd4_minus_cd8_alt: "",
+      imm_cd19: "",
+      imm_cd16_cd56: "",
+      imm_cd3_cd16_cd56: "",
+      imm_cd3_cd25: "",
+      imm_cd8_hla_dr: "",
+      imm_cd19_cd27_igd: "",
+      imm_leukocytes: "",
+      imm_lymphocytes_percent: "",
+      imm_igg: "",
+      imm_igm: "",
+      imm_iga: "",
+      sero_early_igg: "",
+      sero_early_igm: "",
+      sero_acute_igg: "",
+      sero_acute_igm: "",
+      sero_immunity_igg: "",
+      sero_immunity_igm: "",
+      sero_risk_igg: "",
+      sero_risk_igm: "",
+      pcr_chlamydia: "",
+      pcr_ureaplasma: "",
+      pcr_mycoplasma_hominis: "",
+      pcr_mycoplasma_genitalium: "",
+      pcr_herpes: "",
+      pcr_cmv: "",
+      pcr_gonorrhea: "",
+      pcr_trichomonas: "",
+      pcr_gardnerella: "",
+      pcr_candida: "",
+      pcr_hpv_high: "",
+      pcr_hpv_low: "",
+      pcr_streptococcus: "",
+      oak_conclusion: "",
+      oam_conclusion: "",
+      bio_conclusion: "",
+      imm_conclusion: "",
+      sero_conclusion: "",
+      pcr_conclusion: "",
     },
   })
 
@@ -142,6 +246,7 @@ export default function HomePage() {
       case 2:
       case 3:
       case 4:
+      case 5:
         // Эти шаги опциональны, можно пропустить
         return true
       default:
@@ -229,6 +334,8 @@ export default function HomePage() {
         return <Step3LifeHistory form={form} />
       case 4:
         return <Step4Examination form={form} />
+      case 5:
+        return <Step5TestResults form={form} />
       default:
         return null
     }
@@ -1270,6 +1377,540 @@ function Step4Examination({
             <FormMessage />
           </FormItem>
         )}
+      />
+    </FormSection>
+  )
+}
+
+// Step 5: Результаты анализов
+function Step5TestResults({
+  form,
+}: {
+  form: ReturnType<typeof useForm<MedicalFormData>>
+}) {
+  return (
+    <FormSection title="Результаты анализов" icon={TestTube}>
+      {/* Общий Анализ Крови (ОАК) */}
+      <TestResultsTable
+        title="Общий Анализ Крови (ОАК)"
+        conclusionFieldName="oak_conclusion"
+        rows={[
+          {
+            name: "Лейкоциты (WBC)",
+            fieldName: "oak_wbc",
+            unit: "×10⁹/л",
+            reference: "3.89 – 9.23",
+          },
+          {
+            name: "Эритроциты (RBC)",
+            fieldName: "oak_rbc",
+            unit: "×10¹²/л",
+            reference: "3.66 – 4.76",
+          },
+          {
+            name: "Гемоглобин (HGB)",
+            fieldName: "oak_hgb",
+            unit: "г/л",
+            reference: "115.5 – 142.0",
+          },
+          {
+            name: "Гематокрит (HCT)",
+            fieldName: "oak_hct",
+            unit: "%",
+            reference: "34.26 – 43.45",
+          },
+          {
+            name: "Средний объём эритроцита (MCV)",
+            fieldName: "oak_mcv",
+            unit: "фл",
+            reference: "86.5 – 101.79",
+          },
+          {
+            name: "Среднее содерж. Hb в эритроците (MCH)",
+            fieldName: "oak_mch",
+            unit: "пг",
+            reference: "27.23 – 33.76",
+          },
+          {
+            name: "Средняя конц. Hb в эритроците (MCHC)",
+            fieldName: "oak_mchc",
+            unit: "г/л",
+            reference: "30.59 – 33.76",
+          },
+          {
+            name: "Индекс анизоцитоза эритроцитов (RDW-CV)",
+            fieldName: "oak_rdw_cv",
+            unit: "%",
+            reference: "11.63 – 14.87",
+          },
+          {
+            name: "Индекс анизоцитоза эритроцитов (RDW-SD)",
+            fieldName: "oak_rdw_sd",
+            unit: "фл",
+            reference: "38.3 – 51.62",
+          },
+          {
+            name: "Тромбоциты (PLT)",
+            fieldName: "oak_plt",
+            unit: "×10⁹/л",
+            reference: "131.0 – 362.0",
+          },
+          {
+            name: "Тромбокрит (PCT)",
+            fieldName: "oak_pct",
+            unit: "%",
+            reference: "0.17 – 0.39",
+          },
+          {
+            name: "Средний объём тромбоцита (MPV)",
+            fieldName: "oak_mpv",
+            unit: "фл",
+            reference: "9.0 – 13.0",
+          },
+          {
+            name: "Индекс анизоцитоза тромбоцитов (PDW)",
+            fieldName: "oak_pdw",
+            unit: "%",
+            reference: "9.3 – 16.7",
+          },
+        ]}
+      />
+
+      {/* Общий анализ мочи (ОАМ) */}
+      <TestResultsTable
+        title="Общий анализ мочи (ОАМ)"
+        conclusionFieldName="oam_conclusion"
+        rows={[
+          {
+            name: "Цвет",
+            fieldName: "oam_color",
+            unit: "—",
+            reference: "жёлтый",
+          },
+          {
+            name: "Прозрачность",
+            fieldName: "oam_transparency",
+            unit: "—",
+            reference: "прозрачная",
+          },
+          {
+            name: "Осадок",
+            fieldName: "oam_sediment",
+            unit: "—",
+            reference: "незначит. количество",
+          },
+          {
+            name: "Реакция (pH)",
+            fieldName: "oam_ph_reaction",
+            unit: "—",
+            reference: "слабокислая",
+          },
+          {
+            name: "Билирубин",
+            fieldName: "oam_bilirubin",
+            unit: "мкмоль/л",
+            reference: "0 – 3.4",
+          },
+          {
+            name: "Уробилиноген",
+            fieldName: "oam_urobilinogen",
+            unit: "мкмоль/л",
+            reference: "0 – 17",
+          },
+          {
+            name: "Кетоны",
+            fieldName: "oam_ketones",
+            unit: "ммоль/л",
+            reference: "0 – 0.5",
+          },
+          {
+            name: "Аскорбиновая кислота",
+            fieldName: "oam_ascorbic_acid",
+            unit: "мг/л",
+            reference: "отсутствует",
+          },
+          {
+            name: "Глюкоза",
+            fieldName: "oam_glucose",
+            unit: "ммоль/л",
+            reference: "0 – 1.7",
+          },
+          {
+            name: "Белок",
+            fieldName: "oam_protein",
+            unit: "г/л",
+            reference: "0 – 0.1",
+          },
+          {
+            name: "Кровь",
+            fieldName: "oam_blood",
+            unit: "эр/мкл",
+            reference: "0 – 5",
+          },
+          {
+            name: "pH",
+            fieldName: "oam_ph",
+            unit: "—",
+            reference: "4.8 – 7.4",
+          },
+          {
+            name: "Нитриты",
+            fieldName: "oam_nitrites",
+            unit: "—",
+            reference: "отрицательные",
+          },
+          {
+            name: "Лейкоциты (цифровые)",
+            fieldName: "oam_leukocytes_digital",
+            unit: "лейк/мкл",
+            reference: "0 – 10",
+          },
+          {
+            name: "Удельный вес",
+            fieldName: "oam_specific_gravity",
+            unit: "—",
+            reference: "1016 – 1022",
+          },
+          {
+            name: "Эпителий плоский",
+            fieldName: "oam_epithelium",
+            unit: "в п. зр.",
+            reference: "< 5",
+          },
+          {
+            name: "Лейкоциты (микроскопия)",
+            fieldName: "oam_leukocytes_microscopy",
+            unit: "в п. зр.",
+            reference: "0 – 5",
+          },
+          {
+            name: "Эритроциты неизменённые",
+            fieldName: "oam_erythrocytes_unchanged",
+            unit: "в п. зр.",
+            reference: "отсутствуют",
+          },
+          {
+            name: "Эритроциты изменённые",
+            fieldName: "oam_erythrocytes_changed",
+            unit: "в п. зр.",
+            reference: "0 – 2",
+          },
+          {
+            name: "Бактерии",
+            fieldName: "oam_bacteria",
+            unit: "в п. зр.",
+            reference: "отсутствуют",
+          },
+          {
+            name: "Слизь",
+            fieldName: "oam_mucus",
+            unit: "в п. зр.",
+            reference: "незначит. количество",
+          },
+        ]}
+      />
+
+      {/* Биохимия крови */}
+      <TestResultsTable
+        title="Биохимия крови"
+        conclusionFieldName="bio_conclusion"
+        rows={[
+          {
+            name: "Билирубин общий (BILT)",
+            fieldName: "bio_bilt",
+            unit: "мкмоль/л",
+            reference: "2.00 – 13.50",
+          },
+          {
+            name: "Билирубин прямой (BILD)",
+            fieldName: "bio_bild",
+            unit: "мкмоль/л",
+            reference: "0.00 – 5.50",
+          },
+          {
+            name: "АСТ (AST)",
+            fieldName: "bio_ast",
+            unit: "ед./л",
+            reference: "8.0 – 42.0",
+          },
+          {
+            name: "АЛТ (ALT)",
+            fieldName: "bio_alt",
+            unit: "ед./л",
+            reference: "10.0 – 58.0",
+          },
+          {
+            name: "Мочевина (UREA)",
+            fieldName: "bio_urea",
+            unit: "ммоль/л",
+            reference: "3.50 – 9.20",
+          },
+          {
+            name: "Креатинин (CREA)",
+            fieldName: "bio_crea",
+            unit: "мкмоль/л",
+            reference: "26.0 – 130.0",
+          },
+          {
+            name: "Общий белок (TP)",
+            fieldName: "bio_tp",
+            unit: "г/л",
+            reference: "55.0 – 75.0",
+          },
+          {
+            name: "Альбумин (ALB)",
+            fieldName: "bio_alb",
+            unit: "г/л",
+            reference: "25.0 – 39.0",
+          },
+          {
+            name: "Щелочная фосфатаза (ALP/ALP)",
+            fieldName: "bio_alp",
+            unit: "ед./л",
+            reference: "10 – 70",
+          },
+          {
+            name: "α-Амилаза (AMY)",
+            fieldName: "bio_amy",
+            unit: "ед./л",
+            reference: "300 – 1500",
+          },
+          {
+            name: "Глюкоза (GLUE)",
+            fieldName: "bio_glue",
+            unit: "ммоль/л",
+            reference: "4.30 – 7.30",
+          },
+          {
+            name: "ЛДГ (LDH)",
+            fieldName: "bio_ldh",
+            unit: "ед./л",
+            reference: "23 – 220",
+          },
+          {
+            name: "Глобулин (GLOB)",
+            fieldName: "bio_glob",
+            unit: "г/л",
+            reference: "30.00 – 36.00",
+          },
+          {
+            name: "Соотношение альбумин/глобулин (ALB/GLOB)",
+            fieldName: "bio_alb_glob",
+            unit: "—",
+            reference: "0.600 – 1.300",
+          },
+          {
+            name: "Коэффициент Ритиса",
+            fieldName: "bio_ritis",
+            unit: "—",
+            reference: "—",
+          },
+        ]}
+      />
+
+      {/* Иммунологического исследования */}
+      <TestResultsTable
+        title="Иммунологического исследования"
+        conclusionFieldName="imm_conclusion"
+        rows={[
+          {
+            name: "CD3+",
+            fieldName: "imm_cd3",
+            unit: "",
+            reference: "58–85",
+          },
+          {
+            name: "CD3+HLA-DR+",
+            fieldName: "imm_cd3_hla_dr",
+            unit: "",
+            reference: "3–15",
+          },
+          {
+            name: "CD4+CD8–",
+            fieldName: "imm_cd4_cd8_minus",
+            unit: "",
+            reference: "30–56",
+          },
+          {
+            name: "CD4–CD8+",
+            fieldName: "imm_cd4_minus_cd8",
+            unit: "",
+            reference: "18–45",
+          },
+          {
+            name: "CD4+/CD8+",
+            fieldName: "imm_cd4_cd8_ratio",
+            unit: "",
+            reference: "0,6–2,3",
+          },
+          {
+            name: "CD3–CD8+",
+            fieldName: "imm_cd3_minus_cd8",
+            unit: "",
+            reference: "0–1",
+          },
+          {
+            name: "CD4–CD8+",
+            fieldName: "imm_cd4_minus_cd8_alt",
+            unit: "",
+            reference: "0–1",
+          },
+          {
+            name: "CD19+",
+            fieldName: "imm_cd19",
+            unit: "",
+            reference: "7–20",
+          },
+          {
+            name: "CD16+CD56+",
+            fieldName: "imm_cd16_cd56",
+            unit: "",
+            reference: "5–25",
+          },
+          {
+            name: "CD3+CD16+CD56+",
+            fieldName: "imm_cd3_cd16_cd56",
+            unit: "",
+            reference: "0–5",
+          },
+          {
+            name: "CD3+CD25+",
+            fieldName: "imm_cd3_cd25",
+            unit: "",
+            reference: "—",
+          },
+          {
+            name: "CD8+HLA-DR+",
+            fieldName: "imm_cd8_hla_dr",
+            unit: "",
+            reference: "—",
+          },
+          {
+            name: "CD19+CD27+IgD−",
+            fieldName: "imm_cd19_cd27_igd",
+            unit: "",
+            reference: "—",
+          },
+          {
+            name: "Лейкоциты (*10⁹)",
+            fieldName: "imm_leukocytes",
+            unit: "",
+            reference: "4–9",
+          },
+          {
+            name: "Лимфоциты, %",
+            fieldName: "imm_lymphocytes_percent",
+            unit: "",
+            reference: "19–37",
+          },
+          {
+            name: "IgG, г/л",
+            fieldName: "imm_igg",
+            unit: "",
+            reference: "7,2–16,3",
+          },
+          {
+            name: "IgM, г/л",
+            fieldName: "imm_igm",
+            unit: "",
+            reference: "1,9–5,3",
+          },
+          {
+            name: "IgA, г/л",
+            fieldName: "imm_iga",
+            unit: "",
+            reference: "0,6–2,0",
+          },
+        ]}
+      />
+
+      {/* Серологического исследования */}
+      <SerologicalTestTable />
+
+      {/* Детекция микроорганизмов методом ПЦР */}
+      <TestResultsTable
+        title="Детекция микроорганизмов методом ПЦР (ДНК-диагностика)"
+        conclusionFieldName="pcr_conclusion"
+        rows={[
+          {
+            name: "Хламидия (Chlamydia trachomatis)",
+            fieldName: "pcr_chlamydia",
+            unit: "",
+            reference: "норма: не обнаружено",
+          },
+          {
+            name: "Уреаплазма (Ureaplasma urealyticum)",
+            fieldName: "pcr_ureaplasma",
+            unit: "",
+            reference: "норма: не обнаружено",
+          },
+          {
+            name: "Микоплазма (Mycoplasma hominis)",
+            fieldName: "pcr_mycoplasma_hominis",
+            unit: "",
+            reference: "норма: не обнаружено",
+          },
+          {
+            name: "Микоплазма (Mycoplasma genitalium)",
+            fieldName: "pcr_mycoplasma_genitalium",
+            unit: "",
+            reference: "норма: не обнаружено",
+          },
+          {
+            name: "Герпес (HSV 1/2)",
+            fieldName: "pcr_herpes",
+            unit: "",
+            reference: "норма: не обнаружено",
+          },
+          {
+            name: "Цитомегаловирус (CMV hominis)",
+            fieldName: "pcr_cmv",
+            unit: "",
+            reference: "норма: не обнаружено",
+          },
+          {
+            name: "Гонорея (Neisseria gonorrhoeae)",
+            fieldName: "pcr_gonorrhea",
+            unit: "",
+            reference: "норма: не обнаружено",
+          },
+          {
+            name: "Трихомонада (Trichomonas vaginalis)",
+            fieldName: "pcr_trichomonas",
+            unit: "",
+            reference: "норма: не обнаружено",
+          },
+          {
+            name: "Гарднерелла (Gardnerella vaginalis)",
+            fieldName: "pcr_gardnerella",
+            unit: "",
+            reference: "норма: не обнаружено",
+          },
+          {
+            name: "Кандида (Candida albicans)",
+            fieldName: "pcr_candida",
+            unit: "",
+            reference: "норма: не обнаружено",
+          },
+          {
+            name: "ВПЧ инфекция (HPV) высокоонкогенного риска",
+            fieldName: "pcr_hpv_high",
+            unit: "",
+            reference: "норма: не обнаружено",
+          },
+          {
+            name: "ВПЧ инфекция (HPV) низкоонкогенного риска",
+            fieldName: "pcr_hpv_low",
+            unit: "",
+            reference: "норма: не обнаружено",
+          },
+          {
+            name: "Стрептококк (Streptococcus species)",
+            fieldName: "pcr_streptococcus",
+            unit: "",
+            reference: "норма: не обнаружено",
+          },
+        ]}
       />
     </FormSection>
   )

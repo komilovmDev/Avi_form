@@ -11,6 +11,9 @@ interface Step {
 }
 
 interface StepNavigationProps {
+
+
+  
   steps: Step[]
   currentStep: number
   onStepClick?: (step: number) => void
