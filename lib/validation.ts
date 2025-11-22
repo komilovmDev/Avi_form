@@ -212,6 +212,19 @@ export const createMedicalFormSchema = (language: Language = "ru") => {
     imm_conclusion: z.string().optional(),
     sero_conclusion: z.string().optional(),
     pcr_conclusion: z.string().optional(),
+
+    // Инструментальные методы исследования
+    instrumental_research: z.array(
+      z.object({
+        id: z.string().optional(),
+        type: z.string().min(1, t.validation.typeRequired || "Тип исследования обязателен"),
+        date: z.string().optional(),
+        performingDoctor: z.string().optional(),
+        institution: z.string().optional(),
+        images: z.array(z.string()).optional(), // Array of Base64 or URLs
+        comment: z.string().optional(),
+      })
+    ).optional(),
   })
 }
 

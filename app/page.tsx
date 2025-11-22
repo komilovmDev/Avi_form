@@ -32,9 +32,11 @@ import {
   ArrowRight,
   CheckCircle2,
   TestTube,
+  Scan,
 } from "lucide-react"
 import { TestResultsTable } from "@/components/test-results-table"
 import { SerologicalTestTable } from "@/components/serological-test-table"
+import { Step6InstrumentalResearch } from "@/components/instrumental-research"
 import { PDFDocument } from "@/components/pdf-document"
 import { pdf } from "@react-pdf/renderer"
 import { useState, useRef, useMemo, useEffect } from "react"
@@ -74,6 +76,12 @@ export default function HomePage() {
       title: t.steps.step5.title,
       description: t.steps.step5.description,
       icon: TestTube,
+    },
+    {
+      id: 6,
+      title: t.steps.step6.title,
+      description: t.steps.step6.description,
+      icon: Scan,
     },
   ], [t])
   const [currentStep, setCurrentStep] = useState(1)
@@ -326,9 +334,35 @@ export default function HomePage() {
     alert(t.messages.submitted)
   }
 
-  const handleSave = () => {
-    saveNow()
-    alert(t.messages.saved)
+  const handleSave = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    // Prevent any form submission
+    if (formRef.current) {
+      const form = formRef.current
+      form.onsubmit = (ev) => {
+        ev?.preventDefault()
+        ev?.stopPropagation()
+        return false
+      }
+    }
+    
+    try {
+      // Save form data to localStorage
+      saveNow()
+      
+      // Show success message
+      alert(t.messages.saved)
+      
+      // Don't navigate away, stay on current step
+      // Prevent any page reload or navigation
+    } catch (error) {
+      console.error("Error saving form:", error)
+    }
+    
+    // Return false to prevent any default behavior
+    return false
   }
 
   const handleDownloadPDF = async () => {
@@ -366,6 +400,8 @@ export default function HomePage() {
         return <Step4Examination form={form} />
       case 5:
         return <Step5TestResults form={form} />
+      case 6:
+        return <Step6InstrumentalResearch form={form} />
       default:
         return null
     }
@@ -418,6 +454,17 @@ export default function HomePage() {
               } else {
                 console.log("Form submit prevented: not on last step. Current step:", currentStep)
               }
+              return false
+            }}
+            onKeyDown={(e) => {
+              // Prevent Enter key from submitting form unless on last step
+              if (e.key === "Enter" && currentStep !== STEPS.length) {
+                const target = e.target as HTMLElement
+                if (target.tagName !== "TEXTAREA" && target.tagName !== "BUTTON") {
+                  e.preventDefault()
+                  e.stopPropagation()
+                }
+              }
             }}
             className="space-y-6"
           >
@@ -468,7 +515,11 @@ export default function HomePage() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={handleSave}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      handleSave(e)
+                    }}
                     className="flex-1 sm:flex-none min-w-[140px] transition-all duration-200 hover:shadow-md"
                   >
                     <Save className="w-4 h-4 mr-2" />

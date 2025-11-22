@@ -28,6 +28,10 @@ export const translations = {
         title: "Результаты анализов",
         description: "Лабораторные данные",
       },
+      step6: {
+        title: "Инструментальные методы исследования",
+        description: "Рентген, УЗИ, КТ и др.",
+      },
     },
     
     // Buttons
@@ -243,6 +247,45 @@ export const translations = {
       referenceNormal: "норма: не обнаружено",
     },
     
+    // Step 6 - Instrumental Research
+    instrumentalResearch: {
+      title: "Инструментальные методы исследования",
+      addResearch: "Добавить исследование",
+      noResearch: "Исследования не добавлены",
+      researchType: "Тип исследования",
+      researchDate: "Дата исследования",
+      performingDoctor: "Врач-выполняющий",
+      institution: "Учреждение",
+      image: "Изображение",
+      comment: "Комментарий врача",
+      commentPlaceholder: "Введите комментарий...",
+      commentRequired: "Комментарий обязателен, если нет изображения",
+      view: "Просмотр",
+      edit: "Редактировать",
+      delete: "Удалить",
+      download: "Скачать",
+      save: "Сохранить",
+      cancel: "Отмена",
+      deleteConfirm: "Вы уверены, что хотите удалить это исследование?",
+      // Research types
+      typeXray: "Рентгенография",
+      typeFluoroscopy: "Рентгеноскопия",
+      typeContrast: "Контрастные исследования",
+      typeCT: "КТ / МСКТ",
+      typeMRI: "МРТ",
+      typeUltrasound: "УЗИ",
+      typeEchocardiography: "Эхокардиография",
+      typeECG: "ЭКГ",
+      typeEEG: "ЭЭГ",
+      typePFT: "ФВД",
+      typeOther: "Другое",
+      // Validation
+      typeRequired: "Тип исследования обязателен",
+      imageOrCommentRequired: "Необходимо загрузить изображение или добавить комментарий",
+      fileSizeError: "Размер файла не должен превышать 10 МБ",
+      fileTypeError: "Поддерживаются только изображения (JPG, PNG, GIF)",
+    },
+    
     // Messages
     messages: {
       saved: "Анкета сохранена!",
@@ -261,6 +304,7 @@ export const translations = {
       jobRequired: "Место работы обязательно",
       addressRequired: "Адрес обязателен",
       selectPlusOrMinus: "Выберите + или -",
+      typeRequired: "Тип исследования обязателен",
     },
   },
   
@@ -290,6 +334,10 @@ export const translations = {
       step5: {
         title: "Tahlil natijalari",
         description: "Laboratoriya ma'lumotlari",
+      },
+      step6: {
+        title: "Instrumental tekshiruv usullari",
+        description: "Rentgen, UZI, KT va boshqalar",
       },
     },
     
@@ -506,6 +554,45 @@ export const translations = {
       referenceNormal: "norma: aniqlanmadi",
     },
     
+    // Step 6 - Instrumental Research
+    instrumentalResearch: {
+      title: "Instrumental tekshiruv usullari",
+      addResearch: "Tekshiruv qo'shish",
+      noResearch: "Tekshiruvlar qo'shilmagan",
+      researchType: "Tekshiruv turi",
+      researchDate: "Tekshiruv sanasi",
+      performingDoctor: "Tekshiruvni bajargan shifokor",
+      institution: "Muassasa",
+      image: "Rasm",
+      comment: "Shifokor sharhi",
+      commentPlaceholder: "Sharh kiriting...",
+      commentRequired: "Rasm bo'lmasa, sharh majburiy",
+      view: "Ko'rish",
+      edit: "Tahrirlash",
+      delete: "O'chirish",
+      download: "Yuklab olish",
+      save: "Saqlash",
+      cancel: "Bekor qilish",
+      deleteConfirm: "Ushbu tekshiruvni o'chirishni xohlaysizmi?",
+      // Research types
+      typeXray: "Rentgenografiya",
+      typeFluoroscopy: "Rentgenoskopiya",
+      typeContrast: "Kontrastli tekshiruvlar",
+      typeCT: "KT / MSKT",
+      typeMRI: "MRT",
+      typeUltrasound: "UZI",
+      typeEchocardiography: "Exokardiografiya",
+      typeECG: "EKG",
+      typeEEG: "EEG",
+      typePFT: "FVD",
+      typeOther: "Boshqa",
+      // Validation
+      typeRequired: "Tekshiruv turi majburiy",
+      imageOrCommentRequired: "Rasm yuklash yoki sharh qo'shish kerak",
+      fileSizeError: "Fayl hajmi 10 MB dan oshmasligi kerak",
+      fileTypeError: "Faqat rasm fayllari qo'llab-quvvatlanadi (JPG, PNG, GIF)",
+    },
+    
     // Messages
     messages: {
       saved: "Anketa saqlandi!",
@@ -524,6 +611,7 @@ export const translations = {
       jobRequired: "Ish joyi majburiy",
       addressRequired: "Manzil majburiy",
       selectPlusOrMinus: "+ yoki - ni tanlang",
+      typeRequired: "Tekshiruv turi majburiy",
     },
   },
   
@@ -553,6 +641,10 @@ export const translations = {
       step5: {
         title: "Test Results",
         description: "Laboratory Data",
+      },
+      step6: {
+        title: "Instrumental Research Methods",
+        description: "X-ray, Ultrasound, CT, etc.",
       },
     },
     
@@ -769,6 +861,45 @@ export const translations = {
       referenceNormal: "normal: not detected",
     },
     
+    // Step 6 - Instrumental Research
+    instrumentalResearch: {
+      title: "Instrumental Research Methods",
+      addResearch: "Add Research",
+      noResearch: "No research added",
+      researchType: "Research Type",
+      researchDate: "Research Date",
+      performingDoctor: "Performing Doctor",
+      institution: "Institution",
+      image: "Image",
+      comment: "Doctor's Comment",
+      commentPlaceholder: "Enter comment...",
+      commentRequired: "Comment is required if no image",
+      view: "View",
+      edit: "Edit",
+      delete: "Delete",
+      download: "Download",
+      save: "Save",
+      cancel: "Cancel",
+      deleteConfirm: "Are you sure you want to delete this research?",
+      // Research types
+      typeXray: "X-ray",
+      typeFluoroscopy: "Fluoroscopy",
+      typeContrast: "Contrast Studies",
+      typeCT: "CT / MSCT",
+      typeMRI: "MRI",
+      typeUltrasound: "Ultrasound",
+      typeEchocardiography: "Echocardiography",
+      typeECG: "ECG",
+      typeEEG: "EEG",
+      typePFT: "PFT",
+      typeOther: "Other",
+      // Validation
+      typeRequired: "Research type is required",
+      imageOrCommentRequired: "Image upload or comment is required",
+      fileSizeError: "File size must not exceed 10 MB",
+      fileTypeError: "Only image files are supported (JPG, PNG, GIF)",
+    },
+    
     // Messages
     messages: {
       saved: "Form saved!",
@@ -787,6 +918,7 @@ export const translations = {
       jobRequired: "Place of work is required",
       addressRequired: "Address is required",
       selectPlusOrMinus: "Select + or -",
+      typeRequired: "Research type is required",
     },
   },
 } as const
