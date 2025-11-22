@@ -2,10 +2,12 @@
 
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { medicalFormSchema, type MedicalFormData } from "@/lib/validation"
+import { type MedicalFormData } from "@/lib/validation"
+import { createCustomResolver } from "@/lib/custom-resolver"
 import { useAutoSave } from "@/lib/auto-save"
 import { FormSection } from "@/components/form-section"
 import { StepNavigation } from "@/components/step-navigation"
+import { LanguageSwitcher } from "@/components/language-switcher"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -35,51 +37,50 @@ import { TestResultsTable } from "@/components/test-results-table"
 import { SerologicalTestTable } from "@/components/serological-test-table"
 import { PDFDocument } from "@/components/pdf-document"
 import { pdf } from "@react-pdf/renderer"
-import { useState, useRef } from "react"
+import { useState, useRef, useMemo, useEffect } from "react"
 import { cn } from "@/lib/utils"
-
-const STEPS = [
-  {
-    id: 1,
-    title: "Личные данные",
-    description: "Основная информация",
-    icon: User,
-  },
-  {
-    id: 2,
-    title: "Обращение в клинику",
-    description: "Жалобы и симптомы",
-    icon: Calendar,
-  },
-  {
-    id: 3,
-    title: "Анамнез жизни",
-    description: "История жизни",
-    icon: FileText,
-  },
-  {
-    id: 4,
-    title: "Объективное обследование",
-    description: "Заполняет врач",
-    icon: Stethoscope,
-  },
-  {
-    id: 5,
-    title: "Результаты анализов",
-    description: "Лабораторные данные",
-    icon: TestTube,
-  },
-]
+import { useI18n } from "@/lib/i18n"
 
 export default function HomePage() {
+  const { t, language } = useI18n()
+  
+  const STEPS = useMemo(() => [
+    {
+      id: 1,
+      title: t.steps.step1.title,
+      description: t.steps.step1.description,
+      icon: User,
+    },
+    {
+      id: 2,
+      title: t.steps.step2.title,
+      description: t.steps.step2.description,
+      icon: Calendar,
+    },
+    {
+      id: 3,
+      title: t.steps.step3.title,
+      description: t.steps.step3.description,
+      icon: FileText,
+    },
+    {
+      id: 4,
+      title: t.steps.step4.title,
+      description: t.steps.step4.description,
+      icon: Stethoscope,
+    },
+    {
+      id: 5,
+      title: t.steps.step5.title,
+      description: t.steps.step5.description,
+      icon: TestTube,
+    },
+  ], [t])
   const [currentStep, setCurrentStep] = useState(1)
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
 
-  const form = useForm<MedicalFormData>({
-    resolver: zodResolver(medicalFormSchema),
-    mode: "onChange",
-    defaultValues: {
+  const defaultValues = useMemo(() => ({
       fullName: "",
       passport: "",
       birthDate: "",
@@ -212,10 +213,28 @@ export default function HomePage() {
       imm_conclusion: "",
       sero_conclusion: "",
       pcr_conclusion: "",
-    },
+    }
+  ), [])
+
+  const form = useForm<MedicalFormData>({
+    resolver: createCustomResolver(language),
+    mode: "onChange",
+    defaultValues,
   })
 
+  // Update form resolver when language changes
+  useEffect(() => {
+    // Re-validate with new schema
+    form.trigger()
+  }, [language, form])
+
   const { saveNow } = useAutoSave(form)
+
+  // Update resolver when language changes
+  useEffect(() => {
+    // Re-validate form with new schema when language changes
+    form.trigger()
+  }, [language, form])
 
   const validateStep = async (step: number): Promise<boolean> => {
     let fieldsToValidate: (keyof MedicalFormData)[] = []
@@ -254,7 +273,9 @@ export default function HomePage() {
     }
   }
 
-  const handleNext = async () => {
+  const handleNext = async (e?: React.MouseEvent<HTMLButtonElement>) => {
+    e?.preventDefault()
+    e?.stopPropagation()
     const isValid = await validateStep(currentStep)
     if (isValid && currentStep < STEPS.length) {
       setCurrentStep(currentStep + 1)
@@ -287,18 +308,27 @@ export default function HomePage() {
   }
 
   const onSubmit = async (data: MedicalFormData) => {
+    // Faqat oxirgi bo'limda submit qilish mumkin
+    if (currentStep !== STEPS.length) {
+      console.log("Submit blocked: not on last step. Current step:", currentStep, "Total steps:", STEPS.length)
+      return
+    }
+
+    console.log("Submit allowed: on last step. Current step:", currentStep)
+    
     const isValid = await validateStep(currentStep)
     if (!isValid) {
+      console.log("Submit blocked: validation failed")
       return
     }
 
     console.log("Form submitted:", data)
-    alert("Анкета успешно отправлена!")
+    alert(t.messages.submitted)
   }
 
   const handleSave = () => {
     saveNow()
-    alert("Анкета сохранена!")
+    alert(t.messages.saved)
   }
 
   const handleDownloadPDF = async () => {
@@ -344,16 +374,21 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/40 to-emerald-50/40">
       <div className="container mx-auto px-4 py-6 md:py-8 max-w-5xl">
+        {/* Language Switcher */}
+        <div className="flex justify-end mb-4">
+          <LanguageSwitcher />
+        </div>
+        
         {/* Header */}
         <header className="mb-6 md:mb-8 text-center animate-fade-in">
           <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-blue-500 via-blue-600 to-emerald-500 mb-4 shadow-xl shadow-blue-500/30 transition-transform hover:scale-105">
             <Stethoscope className="w-8 h-8 md:w-10 md:h-10 text-white" />
           </div>
           <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-emerald-600 bg-clip-text text-transparent mb-2">
-            Медицинская анкета пациента
+            {t.title}
           </h1>
           <p className="text-gray-600 text-sm md:text-base">
-            Заполните анкету последовательно, шаг за шагом
+            {t.subtitle}
           </p>
         </header>
 
@@ -375,7 +410,15 @@ export default function HomePage() {
         <Form {...form}>
           <form
             ref={formRef}
-            onSubmit={form.handleSubmit(onSubmit)}
+            onSubmit={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              if (currentStep === STEPS.length) {
+                form.handleSubmit(onSubmit)(e)
+              } else {
+                console.log("Form submit prevented: not on last step. Current step:", currentStep)
+              }
+            }}
             className="space-y-6"
           >
             {/* Step Content */}
@@ -395,16 +438,28 @@ export default function HomePage() {
                     className="flex-1 sm:flex-none min-w-[120px] transition-all duration-200 hover:shadow-md"
                   >
                     <ArrowLeft className="w-4 h-4 mr-2" />
-                    Назад
+                    {t.buttons.back}
                   </Button>
-                  {currentStep < STEPS.length && (
+                  {currentStep < STEPS.length ? (
                     <Button
                       type="button"
-                      onClick={handleNext}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        handleNext(e)
+                      }}
                       className="flex-1 sm:flex-none min-w-[120px] bg-gradient-to-r from-blue-500 to-emerald-500 hover:from-blue-600 hover:to-emerald-600 transition-all duration-200 shadow-lg hover:shadow-xl"
                     >
-                      Далее
+                      {t.buttons.next}
                       <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  ) : (
+                    <Button
+                      type="submit"
+                      className="flex-1 sm:flex-none min-w-[120px] bg-gradient-to-r from-blue-500 to-emerald-500 hover:from-blue-600 hover:to-emerald-600 transition-all duration-200 shadow-lg hover:shadow-xl"
+                    >
+                      <Send className="w-4 h-4 mr-2" />
+                      {t.buttons.submit}
                     </Button>
                   )}
                 </div>
@@ -417,7 +472,7 @@ export default function HomePage() {
                     className="flex-1 sm:flex-none min-w-[140px] transition-all duration-200 hover:shadow-md"
                   >
                     <Save className="w-4 h-4 mr-2" />
-                    Сохранить
+                    {t.buttons.save}
                   </Button>
                   <Button
                     type="button"
@@ -427,17 +482,8 @@ export default function HomePage() {
                     className="flex-1 sm:flex-none min-w-[140px] transition-all duration-200 hover:shadow-md"
                   >
                     <Download className="w-4 h-4 mr-2" />
-                    {isGeneratingPDF ? "Создание..." : "PDF"}
+                    {isGeneratingPDF ? t.buttons.generating : t.buttons.pdf}
                   </Button>
-                  {currentStep === STEPS.length && (
-                    <Button
-                      type="submit"
-                      className="flex-1 sm:flex-none min-w-[140px] bg-gradient-to-r from-blue-500 to-emerald-500 hover:from-blue-600 hover:to-emerald-600 transition-all duration-200 shadow-lg hover:shadow-xl"
-                    >
-                      <Send className="w-4 h-4 mr-2" />
-                      Отправить
-                    </Button>
-                  )}
                 </div>
               </div>
             </div>
@@ -454,19 +500,20 @@ function Step1PersonalData({
 }: {
   form: ReturnType<typeof useForm<MedicalFormData>>
 }) {
+  const { t } = useI18n()
   return (
-    <FormSection title="Личные данные" icon={User}>
+    <FormSection title={t.personalData.title} icon={User}>
       <FormField
         control={form.control}
         name="fullName"
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              Ф.И.О <span className="text-red-500">*</span>
+              {t.personalData.fullName} <span className="text-red-500">{t.personalData.required}</span>
             </FormLabel>
             <FormControl>
               <Input
-                title="Введите полное имя, отчество и фамилию пациента"
+                title={t.personalData.fullName}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
@@ -482,11 +529,11 @@ function Step1PersonalData({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              Серия и номер паспорта <span className="text-red-500">*</span>
+              {t.personalData.passport} <span className="text-red-500">{t.personalData.required}</span>
             </FormLabel>
             <FormControl>
               <Input
-                title="Введите серию и номер паспорта (например: AA1234567)"
+                title={t.personalData.passport}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
@@ -503,7 +550,7 @@ function Step1PersonalData({
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-gray-700 font-medium">
-                Дата рождения <span className="text-red-500">*</span>
+                {t.personalData.birthDate} <span className="text-red-500">{t.personalData.required}</span>
               </FormLabel>
               <FormControl>
                 <Input
@@ -523,7 +570,7 @@ function Step1PersonalData({
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-gray-700 font-medium">
-                Пол <span className="text-red-500">*</span>
+                {t.personalData.gender} <span className="text-red-500">{t.personalData.required}</span>
               </FormLabel>
               <FormControl>
                 <RadioGroup
@@ -532,21 +579,21 @@ function Step1PersonalData({
                   className="flex gap-6"
                 >
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Мужской" id="male" />
+                    <RadioGroupItem value={t.personalData.male} id="male" />
                     <label
                       htmlFor="male"
                       className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer hover:text-blue-600 transition-colors"
                     >
-                      Мужской
+                      {t.personalData.male}
                     </label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Женский" id="female" />
+                    <RadioGroupItem value={t.personalData.female} id="female" />
                     <label
                       htmlFor="female"
                       className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer hover:text-blue-600 transition-colors"
                     >
-                      Женский
+                      {t.personalData.female}
                     </label>
                   </div>
                 </RadioGroup>
@@ -563,17 +610,17 @@ function Step1PersonalData({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Семейное положение</b> <span className="text-red-500">*</span>
+              <b>{t.personalData.maritalStatus}</b> <span className="text-red-500">{t.personalData.required}</span>
             </FormLabel>
             <FormControl>
               <Input
-                title="Указать семейный статус и кратко — кто в семье (если важно). Пример: «Женат, двое детей»."
+                title={t.personalData.maritalStatusHint}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Указать семейный статус и кратко — кто в семье (если важно). Пример: «Женат, двое детей».
+              {t.personalData.maritalStatusHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -586,17 +633,17 @@ function Step1PersonalData({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Образование</b> <span className="text-red-500">*</span>
+              <b>{t.personalData.education}</b> <span className="text-red-500">{t.personalData.required}</span>
             </FormLabel>
             <FormControl>
               <Input
-                title="Указать максимальный уровень образования и профиль. Пример: «Высшее медицинское (интернатура по хирургии)»."
+                title={t.personalData.educationHint}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Указать максимальный уровень образования и профиль. Пример: «Высшее медицинское (интернатура по хирургии)».
+              {t.personalData.educationHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -609,19 +656,19 @@ function Step1PersonalData({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Место работы, специальность, должность</b>{" "}
-              <span className="text-red-500">*</span>
+              <b>{t.personalData.job}</b>{" "}
+              <span className="text-red-500">{t.personalData.required}</span>
             </FormLabel>
             <FormControl>
               <Textarea
-                title="Название учреждения/организации и должность; указать условия труда при наличии риска. Пример: «Городская поликлиника №3, медсестра, контакт с хим. веществами»."
+                title={t.personalData.jobHint}
                 rows={3}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Название учреждения/организации и должность; указать условия труда при наличии риска. Пример: «Городская поликлиника №3, медсестра, контакт с хим. веществами».
+              {t.personalData.jobHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -634,18 +681,18 @@ function Step1PersonalData({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Домашний адрес</b> <span className="text-red-500">*</span>
+              <b>{t.personalData.address}</b> <span className="text-red-500">{t.personalData.required}</span>
             </FormLabel>
             <FormControl>
               <Textarea
-                title="Полный адрес проживания, контактный телефон. Пример: «г. Ургенч, ул. Ленина, 12, кв. 5; тел. +998...»."
+                title={t.personalData.addressHint}
                 rows={2}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Полный адрес проживания, контактный телефон. Пример: «г. Ургенч, ул. Ленина, 12, кв. 5; тел. +998...».
+              {t.personalData.addressHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -661,26 +708,27 @@ function Step2ClinicVisit({
 }: {
   form: ReturnType<typeof useForm<MedicalFormData>>
 }) {
+  const { t } = useI18n()
   return (
-    <FormSection title="Обращение в клинику" icon={Calendar}>
+    <FormSection title={t.clinicVisit.title} icon={Calendar}>
       <FormField
         control={form.control}
         name="admissionDate"
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Дата поступления в клинику</b> (необязательно)
+              <b>{t.clinicVisit.admissionDate}</b> {t.clinicVisit.admissionDateOptional}
             </FormLabel>
             <FormControl>
               <Input
                 type="date"
-                title="Записать дату обращения/госпитализации. Пример: «02.11.2025»."
+                title={t.clinicVisit.admissionDateHint}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Записать дату обращения/госпитализации. Пример: «02.11.2025».
+              {t.clinicVisit.admissionDateHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -693,18 +741,18 @@ function Step2ClinicVisit({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Диагноз направившего учреждения</b>
+              <b>{t.clinicVisit.referralDiagnosis}</b>
             </FormLabel>
             <FormControl>
               <Textarea
-                title="Кратко указать предварительный диагноз, поставленный направившей организацией. Пример: «Подозрение на пневмонию, направлен терапевтом»."
+                title={t.clinicVisit.referralDiagnosisHint}
                 rows={3}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Кратко указать предварительный диагноз, поставленный направившей организацией. Пример: «Подозрение на пневмонию, направлен терапевтом».
+              {t.clinicVisit.referralDiagnosisHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -717,18 +765,18 @@ function Step2ClinicVisit({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Основные жалобы</b>
+              <b>{t.clinicVisit.mainComplaints}</b>
             </FormLabel>
             <FormControl>
               <Textarea
-                title="Перечислить 1–3 ключевые жалобы в порядке важности. Пример: «Одышка при нагрузке; кашель с мокротой; температура»."
+                title={t.clinicVisit.mainComplaintsHint}
                 rows={3}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Перечислить 1–3 ключевые жалобы в порядке важности. Пример: «Одышка при нагрузке; кашель с мокротой; температура».
+              {t.clinicVisit.mainComplaintsHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -741,18 +789,18 @@ function Step2ClinicVisit({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Детализация основных жалоб</b>
+              <b>{t.clinicVisit.mainComplaintsDetail}</b>
             </FormLabel>
             <FormControl>
               <Textarea
-                title="Для каждой основной жалобы дать подробности — начало, характер, локализация, интенсивность, длительность, связь с факторами, облегчение/усиление. Пример: «Кашель: влажный, умеренно-редкий, начался 5 дней назад, мокрота желтоватая, усиливается при физической нагрузке»."
+                title={t.clinicVisit.mainComplaintsDetailHint}
                 rows={6}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Для каждой основной жалобы дать подробности — начало, характер, локализация, интенсивность, длительность, связь с факторами, облегчение/усиление. Пример: «Кашель: влажный, умеренно-редкий, начался 5 дней назад, мокрота желтоватая, усиливается при физической нагрузке».
+              {t.clinicVisit.mainComplaintsDetailHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -765,18 +813,18 @@ function Step2ClinicVisit({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Общие жалобы и их детализация</b>
+              <b>{t.clinicVisit.generalComplaints}</b>
             </FormLabel>
             <FormControl>
               <Textarea
-                title="Перечислить неспецифические симптомы (слабость, потеря веса, потливость), с указанием времени и динамики. Пример: «Слабость, снижение аппетита 2 недели»."
+                title={t.clinicVisit.generalComplaintsHint}
                 rows={4}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Перечислить неспецифические симптомы (слабость, потеря веса, потливость), с указанием времени и динамики. Пример: «Слабость, снижение аппетита 2 недели».
+              {t.clinicVisit.generalComplaintsHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -789,18 +837,18 @@ function Step2ClinicVisit({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Жалобы с уточнениями</b>
+              <b>{t.clinicVisit.additionalComplaints}</b>
             </FormLabel>
             <FormControl>
               <Textarea
-                title="Записать дополнительные пояснения от пациента (аллергии, связь с приемом препаратов). Пример: «Появление сыпи после приема амоксициллина»."
+                title={t.clinicVisit.additionalComplaintsHint}
                 rows={4}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Записать дополнительные пояснения от пациента (аллергии, связь с приемом препаратов). Пример: «Появление сыпи после приема амоксициллина».
+              {t.clinicVisit.additionalComplaintsHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -813,17 +861,17 @@ function Step2ClinicVisit({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Когда впервые появились жалобы</b>
+              <b>{t.clinicVisit.firstSymptomsDate}</b>
             </FormLabel>
             <FormControl>
               <Input
-                title="Точная дата или ориентировочный срок и обстоятельства начала. Пример: «Началось остро 29.10.2025 после переохлаждения»."
+                title={t.clinicVisit.firstSymptomsDateHint}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Точная дата или ориентировочный срок и обстоятельства начала. Пример: «Началось остро 29.10.2025 после переохлаждения».
+              {t.clinicVisit.firstSymptomsDateHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -836,17 +884,17 @@ function Step2ClinicVisit({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Какие жалобы появились первыми</b>
+              <b>{t.clinicVisit.firstSymptoms}</b>
             </FormLabel>
             <FormControl>
               <Input
-                title="Указать ведущий симптом при начале. Пример: «Першение в горле, затем подскочила температура»."
+                title={t.clinicVisit.firstSymptomsHint}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Указать ведущий симптом при начале. Пример: «Першение в горле, затем подскочила температура».
+              {t.clinicVisit.firstSymptomsHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -859,18 +907,18 @@ function Step2ClinicVisit({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Что способствовало появлению симптомов</b>
+              <b>{t.clinicVisit.triggers}</b>
             </FormLabel>
             <FormControl>
               <Textarea
-                title="Возможные пусковые факторы (инфекции, травмы, лекарства, нагрузка). Пример: «Контакт с больным в семье; переохлаждение»."
+                title={t.clinicVisit.triggersHint}
                 rows={4}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Возможные пусковые факторы (инфекции, травмы, лекарства, нагрузка). Пример: «Контакт с больным в семье; переохлаждение».
+              {t.clinicVisit.triggersHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -883,18 +931,18 @@ function Step2ClinicVisit({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Динамика симптомов</b>
+              <b>{t.clinicVisit.symptomsDynamic}</b>
             </FormLabel>
             <FormControl>
               <Textarea
-                title="Как менялись симптомы с момента начала: прогресс/ремиссия, появление новых признаков. Пример: «Температура сначала 37.8, на 3-й день — до 39.0; кашель усилился»."
+                title={t.clinicVisit.symptomsDynamicHint}
                 rows={4}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Как менялись симптомы с момента начала: прогресс/ремиссия, появление новых признаков. Пример: «Температура сначала 37.8, на 3-й день — до 39.0; кашель усилился».
+              {t.clinicVisit.symptomsDynamicHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -907,18 +955,18 @@ function Step2ClinicVisit({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Диагнозы, предыдущие обследования и лечение</b>
+              <b>{t.clinicVisit.previousDiagnosis}</b>
             </FormLabel>
             <FormControl>
               <Textarea
-                title="Перечислить поставленные диагнозы, госпитализации, выполненные исследования и проведённое лечение с реакцией. Пример: «Ранее обследование: рентген грудной клетки — инфильтрат НЕ выявлен; амбулаторно принимал амоксициллин — без эффекта»."
+                title={t.clinicVisit.previousDiagnosisHint}
                 rows={6}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Перечислить поставленные диагнозы, госпитализации, выполненные исследования и проведённое лечение с реакцией. Пример: «Ранее обследование: рентген грудной клетки — инфильтрат НЕ выявлен; амбулаторно принимал амоксициллин — без эффекта».
+              {t.clinicVisit.previousDiagnosisHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -931,18 +979,18 @@ function Step2ClinicVisit({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Клинические проявления в момент обращения</b>
+              <b>{t.clinicVisit.currentState}</b>
             </FormLabel>
             <FormControl>
               <Textarea
-                title="Кратко описать текущее состояние и симптомы. Пример: «Лихорадка 38.5, одышка при ходьбе, сатурация 94%»."
+                title={t.clinicVisit.currentStateHint}
                 rows={4}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Кратко описать текущее состояние и симптомы. Пример: «Лихорадка 38.5, одышка при ходьбе, сатурация 94%».
+              {t.clinicVisit.currentStateHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -958,26 +1006,27 @@ function Step3LifeHistory({
 }: {
   form: ReturnType<typeof useForm<MedicalFormData>>
 }) {
+  const { t } = useI18n()
   return (
-    <FormSection title="Анамнез жизни" icon={FileText}>
+    <FormSection title={t.lifeHistory.title} icon={FileText}>
       <FormField
         control={form.control}
         name="badHabits"
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Хронические интоксикации (вредные привычки)</b>
+              <b>{t.lifeHistory.badHabits}</b>
             </FormLabel>
             <FormControl>
               <Textarea
-                title="Курение, алкоголь, наркотики — длительность и количество. Пример: «Курит 5 лет, 5–10 сигар/день»."
+                title={t.lifeHistory.badHabitsHint}
                 rows={3}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Курение, алкоголь, наркотики — длительность и количество. Пример: «Курит 5 лет, 5–10 сигар/день».
+              {t.lifeHistory.badHabitsHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -990,18 +1039,18 @@ function Step3LifeHistory({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Наследственный анамнез</b>
+              <b>{t.lifeHistory.familyHistory}</b>
             </FormLabel>
             <FormControl>
               <Textarea
-                title="Болезни ближайших родственников (сердце, диабет, онкология). Пример: «Мать — СД2; отец — ишемическая болезнь сердца»."
+                title={t.lifeHistory.familyHistoryHint}
                 rows={4}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Болезни ближайших родственников (сердце, диабет, онкология). Пример: «Мать — СД2; отец — ишемическая болезнь сердца».
+              {t.lifeHistory.familyHistoryHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -1014,18 +1063,18 @@ function Step3LifeHistory({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Аллергологический анамнез</b>
+              <b>{t.lifeHistory.allergies}</b>
             </FormLabel>
             <FormControl>
               <Textarea
-                title="Лекарственные и пищевые аллергии, анафилаксии. Пример: «Аллергия на пенициллин — сыпь»."
+                title={t.lifeHistory.allergiesHint}
                 rows={3}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Лекарственные и пищевые аллергии, анафилаксии. Пример: «Аллергия на пенициллин — сыпь».
+              {t.lifeHistory.allergiesHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -1038,18 +1087,18 @@ function Step3LifeHistory({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Перенесённые заболевания / операции / прививки</b>
+              <b>{t.lifeHistory.pastDiseases}</b>
             </FormLabel>
             <FormControl>
               <Textarea
-                title="Значимые заболевания в прошлом, операции, вакцинации. Пример: «Перенес пневмонию в 2019, аппендэктомия в 2015. Привит от COVID-19 (2 дозы)»."
+                title={t.lifeHistory.pastDiseasesHint}
                 rows={6}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Значимые заболевания в прошлом, операции, вакцинации. Пример: «Перенес пневмонию в 2019, аппендэктомия в 2015. Привит от COVID-19 (2 дозы)».
+              {t.lifeHistory.pastDiseasesHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -1065,9 +1114,10 @@ function Step4Examination({
 }: {
   form: ReturnType<typeof useForm<MedicalFormData>>
 }) {
+  const { t } = useI18n()
   return (
     <FormSection
-      title="Объективное обследование (заполняется врачом)"
+      title={t.examination.title}
       icon={Stethoscope}
     >
       <FormField
@@ -1076,18 +1126,18 @@ function Step4Examination({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Общий осмотр</b>
+              <b>{t.examination.generalExamination}</b>
             </FormLabel>
             <FormControl>
               <Textarea
-                title="Записать сознание (ясное/заторможенное), положение, телосложение, походку, цвет кожи, видимые отёки, температуру, ЧСС, АД, SpO₂. Пример: «Сознание ясное, телосложение нормостеническое, t=38.3°C, Пульс 96/мин, АД 125/80 ммHg, SpO₂ 95%»."
+                title={t.examination.generalExaminationHint}
                 rows={5}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Записать сознание (ясное/заторможенное), положение, телосложение, походку, цвет кожи, видимые отёки, температуру, ЧСС, АД, SpO₂. Пример: «Сознание ясное, телосложение нормостеническое, t=38.3°C, Пульс 96/мин, АД 125/80 ммHg, SpO₂ 95%».
+              {t.examination.generalExaminationHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -1100,18 +1150,18 @@ function Step4Examination({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Осмотр по областям. Голова и шея (лицо, рот, шея, щитовидка)</b>
+              <b>{t.examination.headNeck}</b>
             </FormLabel>
             <FormControl>
               <Textarea
-                title="Обратить внимание на асимметрию, желтушность, ангину, увеличение щитовидки, венозный рисунок. Пример: «Щитовидка не увеличена; небные миндалины без налётов»."
+                title={t.examination.headNeckHint}
                 rows={3}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Обратить внимание на асимметрию, желтушность, ангину, увеличение щитовидки, венозный рисунок. Пример: «Щитовидка не увеличена; небные миндалины без налётов».
+              {t.examination.headNeckHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -1124,18 +1174,18 @@ function Step4Examination({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Осмотр по областям. Кожа и подкожная клетчатка</b>
+              <b>{t.examination.skin}</b>
             </FormLabel>
             <FormControl>
               <Textarea
-                title="Цвет, высыпания, язвы, язвочки, трофические изменения, тургор, отёки (локальные/генерализованные). Пример: «Кожные покровы бледные, отёков нет»."
+                title={t.examination.skinHint}
                 rows={3}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Цвет, высыпания, язвы, язвочки, трофические изменения, тургор, отёки (локальные/генерализованные). Пример: «Кожные покровы бледные, отёков нет».
+              {t.examination.skinHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -1148,18 +1198,18 @@ function Step4Examination({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Осмотр по областям. Органы дыхания (осмотр грудной клетки)</b>
+              <b>{t.examination.respiratory}</b>
             </FormLabel>
             <FormControl>
               <Textarea
-                title="Форма грудной клетки, участие вспомогательной мускулатуры, симметрия дыхательных движений. Пример: «Грудная клетка без деформаций, дыхание равномерно двухстороннее»."
+                title={t.examination.respiratoryHint}
                 rows={3}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Форма грудной клетки, участие вспомогательной мускулатуры, симметрия дыхательных движений. Пример: «Грудная клетка без деформаций, дыхание равномерно двухстороннее».
+              {t.examination.respiratoryHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -1172,11 +1222,11 @@ function Step4Examination({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Осмотр по областям. Сердечно-сосудистая система (осмотр)</b>
+              <b>{t.examination.cardiovascular}</b>
             </FormLabel>
             <FormControl>
               <Textarea
-                title="Осмотр сердечно-сосудистой системы"
+                title={t.examination.cardiovascularHint}
                 rows={3}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
@@ -1193,18 +1243,18 @@ function Step4Examination({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Осмотр по областям. ЖКТ (живот — осмотр)</b>
+              <b>{t.examination.abdomen}</b>
             </FormLabel>
             <FormControl>
               <Textarea
-                title="Форма живота, рубцы, видимые перистальтические волны, высыпания. Пример: «Живот ровный, без видимых вздутий»."
+                title={t.examination.abdomenHint}
                 rows={3}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Форма живота, рубцы, видимые перистальтические волны, высыпания. Пример: «Живот ровный, без видимых вздутий».
+              {t.examination.abdomenHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -1217,18 +1267,18 @@ function Step4Examination({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Осмотр по областям. Опорно-двигательная система</b>
+              <b>{t.examination.musculoskeletal}</b>
             </FormLabel>
             <FormControl>
               <Textarea
-                title="Осмотреть конечности на деформации, контрактуры, язвы. Пример: «Деформаций суставов нет»."
+                title={t.examination.musculoskeletalHint}
                 rows={3}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Осмотреть конечности на деформации, контрактуры, язвы. Пример: «Деформаций суставов нет».
+              {t.examination.musculoskeletalHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -1241,18 +1291,18 @@ function Step4Examination({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Пальпация лимфоузлов</b>
+              <b>{t.examination.lymphNodes}</b>
             </FormLabel>
             <FormControl>
               <Textarea
-                title="Указать расположение увеличенных ЛУ, размер, консистенцию, подвижность, болезненность. Пример: «Шейные лимфоузлы 1.5 см, эластичные, слегка болезненны»."
+                title={t.examination.lymphNodesHint}
                 rows={3}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Указать расположение увеличенных ЛУ, размер, консистенцию, подвижность, болезненность. Пример: «Шейные лимфоузлы 1.5 см, эластичные, слегка болезненны».
+              {t.examination.lymphNodesHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -1265,18 +1315,18 @@ function Step4Examination({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Пальпация живота</b>
+              <b>{t.examination.abdomenPalpation}</b>
             </FormLabel>
             <FormControl>
               <Textarea
-                title="Поверхностная и глубокая пальпация, болезненность, напряжение мышц, определения размеров печени/селезёнки. Пример: «Печень +2 см от края правой реберной дуги, болезненна»."
+                title={t.examination.abdomenPalpationHint}
                 rows={3}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Поверхностная и глубокая пальпация, болезненность, напряжение мышц, определения размеров печени/селезёнки. Пример: «Печень +2 см от края правой реберной дуги, болезненна».
+              {t.examination.abdomenPalpationHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -1289,18 +1339,18 @@ function Step4Examination({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Перкуссия. Границы и звуковые изменения</b>
+              <b>{t.examination.percussion}</b>
             </FormLabel>
             <FormControl>
               <Textarea
-                title="Отметить границы сердца, печени, выявить притупление/тимпанит. Пример: «Тупой перкуторный звук над правой нижней долей легкого»."
+                title={t.examination.percussionHint}
                 rows={3}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Отметить границы сердца, печени, выявить притупление/тимпанит. Пример: «Тупой перкуторный звук над правой нижней долей легкого».
+              {t.examination.percussionHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -1313,18 +1363,18 @@ function Step4Examination({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Аускультация. Лёгкие</b>
+              <b>{t.examination.lungAuscultation}</b>
             </FormLabel>
             <FormControl>
               <Textarea
-                title="Записать тип дыхания, наличие и тип хрипов, их локализацию, изменение при кашле. Пример: «Влажные мелкопузырчатые хрипы в правой нижней доле»."
+                title={t.examination.lungAuscultationHint}
                 rows={3}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Записать тип дыхания, наличие и тип хрипов, их локализацию, изменение при кашле. Пример: «Влажные мелкопузырчатые хрипы в правой нижней доле».
+              {t.examination.lungAuscultationHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -1337,18 +1387,18 @@ function Step4Examination({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Аускультация. Сердце</b>
+              <b>{t.examination.heartAuscultation}</b>
             </FormLabel>
             <FormControl>
               <Textarea
-                title="Тоны (жёсткие/громкие), наличие шумов (систолический/диастолический), их выслушивание. Пример: «Тоны сердца слуховые, S1, S2 не изменены, систолического шума нет»."
+                title={t.examination.heartAuscultationHint}
                 rows={3}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Тоны (жёсткие/громкие), наличие шумов (систолический/диастолический), их выслушивание. Пример: «Тоны сердца слуховые, S1, S2 не изменены, систолического шума нет».
+              {t.examination.heartAuscultationHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -1361,18 +1411,18 @@ function Step4Examination({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="text-gray-700 font-medium">
-              <b>Аускультация. Живот (кишка)</b>
+              <b>{t.examination.abdomenAuscultation}</b>
             </FormLabel>
             <FormControl>
               <Textarea
-                title="Перистальтика (усиленная/ослабленная/отсутствует). Пример: «Перистальтика выслушивается, умеренная»."
+                title={t.examination.abdomenAuscultationHint}
                 rows={3}
                 className="transition-all duration-200 hover:border-primary/50 focus:ring-2 focus:ring-blue-500/20"
                 {...field}
               />
             </FormControl>
             <p className="text-xs text-gray-500 italic">
-              Перистальтика (усиленная/ослабленная/отсутствует). Пример: «Перистальтика выслушивается, умеренная».
+              {t.examination.abdomenAuscultationHint}
             </p>
             <FormMessage />
           </FormItem>
@@ -1388,87 +1438,88 @@ function Step5TestResults({
 }: {
   form: ReturnType<typeof useForm<MedicalFormData>>
 }) {
+  const { t } = useI18n()
   return (
-    <FormSection title="Результаты анализов" icon={TestTube}>
+    <FormSection title={t.testResults.title} icon={TestTube}>
       {/* Общий Анализ Крови (ОАК) */}
       <TestResultsTable
-        title="Общий Анализ Крови (ОАК)"
+        title={t.testResults.oak}
         conclusionFieldName="oak_conclusion"
         rows={[
           {
-            name: "Лейкоциты (WBC)",
+            name: t.testResults.oak_wbc,
             fieldName: "oak_wbc",
             unit: "×10⁹/л",
             reference: "3.89 – 9.23",
           },
           {
-            name: "Эритроциты (RBC)",
+            name: t.testResults.oak_rbc,
             fieldName: "oak_rbc",
             unit: "×10¹²/л",
             reference: "3.66 – 4.76",
           },
           {
-            name: "Гемоглобин (HGB)",
+            name: t.testResults.oak_hgb,
             fieldName: "oak_hgb",
             unit: "г/л",
             reference: "115.5 – 142.0",
           },
           {
-            name: "Гематокрит (HCT)",
+            name: t.testResults.oak_hct,
             fieldName: "oak_hct",
             unit: "%",
             reference: "34.26 – 43.45",
           },
           {
-            name: "Средний объём эритроцита (MCV)",
+            name: t.testResults.oak_mcv,
             fieldName: "oak_mcv",
             unit: "фл",
             reference: "86.5 – 101.79",
           },
           {
-            name: "Среднее содерж. Hb в эритроците (MCH)",
+            name: t.testResults.oak_mch,
             fieldName: "oak_mch",
             unit: "пг",
             reference: "27.23 – 33.76",
           },
           {
-            name: "Средняя конц. Hb в эритроците (MCHC)",
+            name: t.testResults.oak_mchc,
             fieldName: "oak_mchc",
             unit: "г/л",
             reference: "30.59 – 33.76",
           },
           {
-            name: "Индекс анизоцитоза эритроцитов (RDW-CV)",
+            name: t.testResults.oak_rdw_cv,
             fieldName: "oak_rdw_cv",
             unit: "%",
             reference: "11.63 – 14.87",
           },
           {
-            name: "Индекс анизоцитоза эритроцитов (RDW-SD)",
+            name: t.testResults.oak_rdw_sd,
             fieldName: "oak_rdw_sd",
             unit: "фл",
             reference: "38.3 – 51.62",
           },
           {
-            name: "Тромбоциты (PLT)",
+            name: t.testResults.oak_plt,
             fieldName: "oak_plt",
             unit: "×10⁹/л",
             reference: "131.0 – 362.0",
           },
           {
-            name: "Тромбокрит (PCT)",
+            name: t.testResults.oak_pct,
             fieldName: "oak_pct",
             unit: "%",
             reference: "0.17 – 0.39",
           },
           {
-            name: "Средний объём тромбоцита (MPV)",
+            name: t.testResults.oak_mpv,
             fieldName: "oak_mpv",
             unit: "фл",
             reference: "9.0 – 13.0",
           },
           {
-            name: "Индекс анизоцитоза тромбоцитов (PDW)",
+            name: t.testResults.oak_pdw,
             fieldName: "oak_pdw",
             unit: "%",
             reference: "9.3 – 16.7",
@@ -1478,131 +1529,131 @@ function Step5TestResults({
 
       {/* Общий анализ мочи (ОАМ) */}
       <TestResultsTable
-        title="Общий анализ мочи (ОАМ)"
+        title={t.testResults.oam}
         conclusionFieldName="oam_conclusion"
         rows={[
           {
-            name: "Цвет",
+            name: t.testResults.oam_color,
             fieldName: "oam_color",
             unit: "—",
             reference: "жёлтый",
           },
           {
-            name: "Прозрачность",
+            name: t.testResults.oam_transparency,
             fieldName: "oam_transparency",
             unit: "—",
             reference: "прозрачная",
           },
           {
-            name: "Осадок",
+            name: t.testResults.oam_sediment,
             fieldName: "oam_sediment",
             unit: "—",
             reference: "незначит. количество",
           },
           {
-            name: "Реакция (pH)",
+            name: t.testResults.oam_ph_reaction,
             fieldName: "oam_ph_reaction",
             unit: "—",
             reference: "слабокислая",
           },
           {
-            name: "Билирубин",
+            name: t.testResults.oam_bilirubin,
             fieldName: "oam_bilirubin",
             unit: "мкмоль/л",
             reference: "0 – 3.4",
           },
           {
-            name: "Уробилиноген",
+            name: t.testResults.oam_urobilinogen,
             fieldName: "oam_urobilinogen",
             unit: "мкмоль/л",
             reference: "0 – 17",
           },
           {
-            name: "Кетоны",
+            name: t.testResults.oam_ketones,
             fieldName: "oam_ketones",
             unit: "ммоль/л",
             reference: "0 – 0.5",
           },
           {
-            name: "Аскорбиновая кислота",
+            name: t.testResults.oam_ascorbic_acid,
             fieldName: "oam_ascorbic_acid",
             unit: "мг/л",
             reference: "отсутствует",
           },
           {
-            name: "Глюкоза",
+            name: t.testResults.oam_glucose,
             fieldName: "oam_glucose",
             unit: "ммоль/л",
             reference: "0 – 1.7",
           },
           {
-            name: "Белок",
+            name: t.testResults.oam_protein,
             fieldName: "oam_protein",
             unit: "г/л",
             reference: "0 – 0.1",
           },
           {
-            name: "Кровь",
+            name: t.testResults.oam_blood,
             fieldName: "oam_blood",
             unit: "эр/мкл",
             reference: "0 – 5",
           },
           {
-            name: "pH",
+            name: t.testResults.oam_ph,
             fieldName: "oam_ph",
             unit: "—",
             reference: "4.8 – 7.4",
           },
           {
-            name: "Нитриты",
+            name: t.testResults.oam_nitrites,
             fieldName: "oam_nitrites",
             unit: "—",
             reference: "отрицательные",
           },
           {
-            name: "Лейкоциты (цифровые)",
+            name: t.testResults.oam_leukocytes_digital,
             fieldName: "oam_leukocytes_digital",
             unit: "лейк/мкл",
             reference: "0 – 10",
           },
           {
-            name: "Удельный вес",
+            name: t.testResults.oam_specific_gravity,
             fieldName: "oam_specific_gravity",
             unit: "—",
             reference: "1016 – 1022",
           },
           {
-            name: "Эпителий плоский",
+            name: t.testResults.oam_epithelium,
             fieldName: "oam_epithelium",
             unit: "в п. зр.",
             reference: "< 5",
           },
           {
-            name: "Лейкоциты (микроскопия)",
+            name: t.testResults.oam_leukocytes_microscopy,
             fieldName: "oam_leukocytes_microscopy",
             unit: "в п. зр.",
             reference: "0 – 5",
           },
           {
-            name: "Эритроциты неизменённые",
+            name: t.testResults.oam_erythrocytes_unchanged,
             fieldName: "oam_erythrocytes_unchanged",
             unit: "в п. зр.",
             reference: "отсутствуют",
           },
           {
-            name: "Эритроциты изменённые",
+            name: t.testResults.oam_erythrocytes_changed,
             fieldName: "oam_erythrocytes_changed",
             unit: "в п. зр.",
             reference: "0 – 2",
           },
           {
-            name: "Бактерии",
+            name: t.testResults.oam_bacteria,
             fieldName: "oam_bacteria",
             unit: "в п. зр.",
             reference: "отсутствуют",
           },
           {
-            name: "Слизь",
+            name: t.testResults.oam_mucus,
             fieldName: "oam_mucus",
             unit: "в п. зр.",
             reference: "незначит. количество",
@@ -1612,95 +1663,95 @@ function Step5TestResults({
 
       {/* Биохимия крови */}
       <TestResultsTable
-        title="Биохимия крови"
+        title={t.testResults.bio}
         conclusionFieldName="bio_conclusion"
         rows={[
           {
-            name: "Билирубин общий (BILT)",
+            name: t.testResults.bio_bilt,
             fieldName: "bio_bilt",
             unit: "мкмоль/л",
             reference: "2.00 – 13.50",
           },
           {
-            name: "Билирубин прямой (BILD)",
+            name: t.testResults.bio_bild,
             fieldName: "bio_bild",
             unit: "мкмоль/л",
             reference: "0.00 – 5.50",
           },
           {
-            name: "АСТ (AST)",
+            name: t.testResults.bio_ast,
             fieldName: "bio_ast",
             unit: "ед./л",
             reference: "8.0 – 42.0",
           },
           {
-            name: "АЛТ (ALT)",
+            name: t.testResults.bio_alt,
             fieldName: "bio_alt",
             unit: "ед./л",
             reference: "10.0 – 58.0",
           },
           {
-            name: "Мочевина (UREA)",
+            name: t.testResults.bio_urea,
             fieldName: "bio_urea",
             unit: "ммоль/л",
             reference: "3.50 – 9.20",
           },
           {
-            name: "Креатинин (CREA)",
+            name: t.testResults.bio_crea,
             fieldName: "bio_crea",
             unit: "мкмоль/л",
             reference: "26.0 – 130.0",
           },
           {
-            name: "Общий белок (TP)",
+            name: t.testResults.bio_tp,
             fieldName: "bio_tp",
             unit: "г/л",
             reference: "55.0 – 75.0",
           },
           {
-            name: "Альбумин (ALB)",
+            name: t.testResults.bio_alb,
             fieldName: "bio_alb",
             unit: "г/л",
             reference: "25.0 – 39.0",
           },
           {
-            name: "Щелочная фосфатаза (ALP/ALP)",
+            name: t.testResults.bio_alp,
             fieldName: "bio_alp",
             unit: "ед./л",
             reference: "10 – 70",
           },
           {
-            name: "α-Амилаза (AMY)",
+            name: t.testResults.bio_amy,
             fieldName: "bio_amy",
             unit: "ед./л",
             reference: "300 – 1500",
           },
           {
-            name: "Глюкоза (GLUE)",
+            name: t.testResults.bio_glue,
             fieldName: "bio_glue",
             unit: "ммоль/л",
             reference: "4.30 – 7.30",
           },
           {
-            name: "ЛДГ (LDH)",
+            name: t.testResults.bio_ldh,
             fieldName: "bio_ldh",
             unit: "ед./л",
             reference: "23 – 220",
           },
           {
-            name: "Глобулин (GLOB)",
+            name: t.testResults.bio_glob,
             fieldName: "bio_glob",
             unit: "г/л",
             reference: "30.00 – 36.00",
           },
           {
-            name: "Соотношение альбумин/глобулин (ALB/GLOB)",
+            name: t.testResults.bio_alb_glob,
             fieldName: "bio_alb_glob",
             unit: "—",
             reference: "0.600 – 1.300",
           },
           {
-            name: "Коэффициент Ритиса",
+            name: t.testResults.bio_ritis,
             fieldName: "bio_ritis",
             unit: "—",
             reference: "—",
@@ -1710,113 +1761,113 @@ function Step5TestResults({
 
       {/* Иммунологического исследования */}
       <TestResultsTable
-        title="Иммунологического исследования"
+        title={t.testResults.imm}
         conclusionFieldName="imm_conclusion"
         rows={[
           {
-            name: "CD3+",
+            name: t.testResults.imm_cd3,
             fieldName: "imm_cd3",
             unit: "",
             reference: "58–85",
           },
           {
-            name: "CD3+HLA-DR+",
+            name: t.testResults.imm_cd3_hla_dr,
             fieldName: "imm_cd3_hla_dr",
             unit: "",
             reference: "3–15",
           },
           {
-            name: "CD4+CD8–",
+            name: t.testResults.imm_cd4_cd8_minus,
             fieldName: "imm_cd4_cd8_minus",
             unit: "",
             reference: "30–56",
           },
           {
-            name: "CD4–CD8+",
+            name: t.testResults.imm_cd4_minus_cd8,
             fieldName: "imm_cd4_minus_cd8",
             unit: "",
             reference: "18–45",
           },
           {
-            name: "CD4+/CD8+",
+            name: t.testResults.imm_cd4_cd8_ratio,
             fieldName: "imm_cd4_cd8_ratio",
             unit: "",
             reference: "0,6–2,3",
           },
           {
-            name: "CD3–CD8+",
+            name: t.testResults.imm_cd3_minus_cd8,
             fieldName: "imm_cd3_minus_cd8",
             unit: "",
             reference: "0–1",
           },
           {
-            name: "CD4–CD8+",
+            name: t.testResults.imm_cd4_minus_cd8_alt,
             fieldName: "imm_cd4_minus_cd8_alt",
             unit: "",
             reference: "0–1",
           },
           {
-            name: "CD19+",
+            name: t.testResults.imm_cd19,
             fieldName: "imm_cd19",
             unit: "",
             reference: "7–20",
           },
           {
-            name: "CD16+CD56+",
+            name: t.testResults.imm_cd16_cd56,
             fieldName: "imm_cd16_cd56",
             unit: "",
             reference: "5–25",
           },
           {
-            name: "CD3+CD16+CD56+",
+            name: t.testResults.imm_cd3_cd16_cd56,
             fieldName: "imm_cd3_cd16_cd56",
             unit: "",
             reference: "0–5",
           },
           {
-            name: "CD3+CD25+",
+            name: t.testResults.imm_cd3_cd25,
             fieldName: "imm_cd3_cd25",
             unit: "",
             reference: "—",
           },
           {
-            name: "CD8+HLA-DR+",
+            name: t.testResults.imm_cd8_hla_dr,
             fieldName: "imm_cd8_hla_dr",
             unit: "",
             reference: "—",
           },
           {
-            name: "CD19+CD27+IgD−",
+            name: t.testResults.imm_cd19_cd27_igd,
             fieldName: "imm_cd19_cd27_igd",
             unit: "",
             reference: "—",
           },
           {
-            name: "Лейкоциты (*10⁹)",
+            name: t.testResults.imm_leukocytes,
             fieldName: "imm_leukocytes",
             unit: "",
             reference: "4–9",
           },
           {
-            name: "Лимфоциты, %",
+            name: t.testResults.imm_lymphocytes_percent,
             fieldName: "imm_lymphocytes_percent",
             unit: "",
             reference: "19–37",
           },
           {
-            name: "IgG, г/л",
+            name: t.testResults.imm_igg,
             fieldName: "imm_igg",
             unit: "",
             reference: "7,2–16,3",
           },
           {
-            name: "IgM, г/л",
+            name: t.testResults.imm_igm,
             fieldName: "imm_igm",
             unit: "",
             reference: "1,9–5,3",
           },
           {
-            name: "IgA, г/л",
+            name: t.testResults.imm_iga,
             fieldName: "imm_iga",
             unit: "",
             reference: "0,6–2,0",
@@ -1829,86 +1880,86 @@ function Step5TestResults({
 
       {/* Детекция микроорганизмов методом ПЦР */}
       <TestResultsTable
-        title="Детекция микроорганизмов методом ПЦР (ДНК-диагностика)"
+        title={t.testResults.pcr}
         conclusionFieldName="pcr_conclusion"
         rows={[
           {
-            name: "Хламидия (Chlamydia trachomatis)",
+            name: t.testResults.pcr_chlamydia,
             fieldName: "pcr_chlamydia",
             unit: "",
-            reference: "норма: не обнаружено",
+            reference: t.testResults.referenceNormal,
           },
           {
-            name: "Уреаплазма (Ureaplasma urealyticum)",
+            name: t.testResults.pcr_ureaplasma,
             fieldName: "pcr_ureaplasma",
             unit: "",
-            reference: "норма: не обнаружено",
+            reference: t.testResults.referenceNormal,
           },
           {
-            name: "Микоплазма (Mycoplasma hominis)",
+            name: t.testResults.pcr_mycoplasma_hominis,
             fieldName: "pcr_mycoplasma_hominis",
             unit: "",
-            reference: "норма: не обнаружено",
+            reference: t.testResults.referenceNormal,
           },
           {
-            name: "Микоплазма (Mycoplasma genitalium)",
+            name: t.testResults.pcr_mycoplasma_genitalium,
             fieldName: "pcr_mycoplasma_genitalium",
             unit: "",
-            reference: "норма: не обнаружено",
+            reference: t.testResults.referenceNormal,
           },
           {
-            name: "Герпес (HSV 1/2)",
+            name: t.testResults.pcr_herpes,
             fieldName: "pcr_herpes",
             unit: "",
-            reference: "норма: не обнаружено",
+            reference: t.testResults.referenceNormal,
           },
           {
-            name: "Цитомегаловирус (CMV hominis)",
+            name: t.testResults.pcr_cmv,
             fieldName: "pcr_cmv",
             unit: "",
-            reference: "норма: не обнаружено",
+            reference: t.testResults.referenceNormal,
           },
           {
-            name: "Гонорея (Neisseria gonorrhoeae)",
+            name: t.testResults.pcr_gonorrhea,
             fieldName: "pcr_gonorrhea",
             unit: "",
-            reference: "норма: не обнаружено",
+            reference: t.testResults.referenceNormal,
           },
           {
-            name: "Трихомонада (Trichomonas vaginalis)",
+            name: t.testResults.pcr_trichomonas,
             fieldName: "pcr_trichomonas",
             unit: "",
-            reference: "норма: не обнаружено",
+            reference: t.testResults.referenceNormal,
           },
           {
-            name: "Гарднерелла (Gardnerella vaginalis)",
+            name: t.testResults.pcr_gardnerella,
             fieldName: "pcr_gardnerella",
             unit: "",
-            reference: "норма: не обнаружено",
+            reference: t.testResults.referenceNormal,
           },
           {
-            name: "Кандида (Candida albicans)",
+            name: t.testResults.pcr_candida,
             fieldName: "pcr_candida",
             unit: "",
-            reference: "норма: не обнаружено",
+            reference: t.testResults.referenceNormal,
           },
           {
-            name: "ВПЧ инфекция (HPV) высокоонкогенного риска",
+            name: t.testResults.pcr_hpv_high,
             fieldName: "pcr_hpv_high",
             unit: "",
-            reference: "норма: не обнаружено",
+            reference: t.testResults.referenceNormal,
           },
           {
-            name: "ВПЧ инфекция (HPV) низкоонкогенного риска",
+            name: t.testResults.pcr_hpv_low,
             fieldName: "pcr_hpv_low",
             unit: "",
-            reference: "норма: не обнаружено",
+            reference: t.testResults.referenceNormal,
           },
           {
-            name: "Стрептококк (Streptococcus species)",
+            name: t.testResults.pcr_streptococcus,
             fieldName: "pcr_streptococcus",
             unit: "",
-            reference: "норма: не обнаружено",
+            reference: t.testResults.referenceNormal,
           },
         ]}
       />

@@ -4,14 +4,16 @@ import { useFormContext } from "react-hook-form"
 import { FormField, FormItem, FormControl, FormLabel } from "@/components/ui/form"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { type MedicalFormData } from "@/lib/validation"
+import { useI18n } from "@/lib/i18n"
 
 export function SerologicalTestTable() {
   const form = useFormContext<MedicalFormData>()
+  const { t } = useI18n()
 
   return (
     <div className="mb-8">
       <h3 className="text-lg font-semibold mb-4 text-gray-800">
-        Серологического исследования
+        {t.testResults.sero}
       </h3>
       
       {/* Таблица интерпретации результатов */}
@@ -20,7 +22,7 @@ export function SerologicalTestTable() {
           <thead>
             <tr className="bg-gradient-to-r from-blue-50 to-emerald-50 border-b-2 border-gray-300">
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-r border-gray-200">
-                Интерпретация результатов
+                {t.testResults.seroInterpretation}
               </th>
               <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 border-r border-gray-200">
                 IgG
@@ -33,7 +35,7 @@ export function SerologicalTestTable() {
           <tbody>
             <tr className="border-b border-gray-100 bg-white hover:bg-gray-50 transition-colors">
               <td className="px-4 py-3 text-sm text-gray-700 border-r border-gray-200 font-medium">
-                Ранняя фаза острой инфекции
+                {t.testResults.seroEarly}
               </td>
               <td className="px-4 py-3 text-center border-r border-gray-200">
                 <FormField
@@ -122,7 +124,7 @@ export function SerologicalTestTable() {
             </tr>
             <tr className="border-b border-gray-100 bg-gray-50/50 hover:bg-gray-50 transition-colors">
               <td className="px-4 py-3 text-sm text-gray-700 border-r border-gray-200 font-medium">
-                Острая инфекция или обострение хронической инфекции
+                {t.testResults.seroAcute}
               </td>
               <td className="px-4 py-3 text-center border-r border-gray-200">
                 <FormField
@@ -211,7 +213,7 @@ export function SerologicalTestTable() {
             </tr>
             <tr className="border-b border-gray-100 bg-white hover:bg-gray-50 transition-colors">
               <td className="px-4 py-3 text-sm text-gray-700 border-r border-gray-200 font-medium">
-                Состояние иммунитета
+                {t.testResults.seroImmunity}
               </td>
               <td className="px-4 py-3 text-center border-r border-gray-200">
                 <FormField
@@ -300,7 +302,7 @@ export function SerologicalTestTable() {
             </tr>
             <tr className="border-b border-gray-100 bg-gray-50/50 hover:bg-gray-50 transition-colors">
               <td className="px-4 py-3 text-sm text-gray-700 border-r border-gray-200 font-medium">
-                Группа риска (нет инфекции, нет иммунитета)
+                {t.testResults.seroRisk}
               </td>
               <td className="px-4 py-3 text-center border-r border-gray-200">
                 <FormField
@@ -399,14 +401,14 @@ export function SerologicalTestTable() {
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-sm font-semibold text-gray-700">
-                Заключение:
+                {t.testResults.conclusion}
               </FormLabel>
               <FormControl>
                 <textarea
                   {...field}
                   rows={3}
                   className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 resize-y"
-                  placeholder="Введите заключение..."
+                  placeholder={t.testResults.conclusionPlaceholder}
                 />
               </FormControl>
             </FormItem>

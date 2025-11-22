@@ -4,6 +4,7 @@ import { useFormContext } from "react-hook-form"
 import { Input } from "@/components/ui/input"
 import { FormField, FormItem, FormControl, FormLabel } from "@/components/ui/form"
 import { type MedicalFormData } from "@/lib/validation"
+import { useI18n } from "@/lib/i18n"
 
 interface TestResultRow {
   name: string
@@ -20,6 +21,7 @@ interface TestResultsTableProps {
 
 export function TestResultsTable({ title, rows, conclusionFieldName }: TestResultsTableProps) {
   const form = useFormContext<MedicalFormData>()
+  const { t } = useI18n()
 
   return (
     <div className="mb-8">
@@ -29,16 +31,16 @@ export function TestResultsTable({ title, rows, conclusionFieldName }: TestResul
           <thead>
             <tr className="bg-gradient-to-r from-blue-50 to-emerald-50 border-b-2 border-gray-300">
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-r border-gray-200">
-                Показатель
+                {t.testResults.indicator}
               </th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-r border-gray-200">
-                Результат
+                {t.testResults.result}
               </th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-r border-gray-200">
-                Ед. изм.
+                {t.testResults.unit}
               </th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                Референсные значения
+                {t.testResults.reference}
               </th>
             </tr>
           </thead>
@@ -91,14 +93,14 @@ export function TestResultsTable({ title, rows, conclusionFieldName }: TestResul
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-sm font-semibold text-gray-700">
-                  Заключение:
+                  {t.testResults.conclusion}
                 </FormLabel>
                 <FormControl>
                   <textarea
                     {...field}
                     rows={3}
                     className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 resize-y"
-                    placeholder="Введите заключение..."
+                    placeholder={t.testResults.conclusionPlaceholder}
                   />
                 </FormControl>
               </FormItem>
