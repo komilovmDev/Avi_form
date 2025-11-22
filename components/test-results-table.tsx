@@ -64,6 +64,7 @@ export function TestResultsTable({ title, rows, conclusionFieldName }: TestResul
                         <FormControl>
                           <Input
                             {...field}
+                            value={typeof field.value === 'string' ? field.value : String(field.value || '')}
                             className="h-8 text-sm border-gray-300 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
                             placeholder="—"
                           />
@@ -98,6 +99,7 @@ export function TestResultsTable({ title, rows, conclusionFieldName }: TestResul
                 <FormControl>
                   <textarea
                     {...field}
+                    value={typeof field.value === 'string' ? field.value : String(field.value || '')}
                     rows={3}
                     className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 resize-y"
                     placeholder={t.testResults.conclusionPlaceholder}
