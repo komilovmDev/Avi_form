@@ -5,7 +5,7 @@ export const createMedicalFormSchema = (language: Language = "ru") => {
   const t = translations[language]
   
   // Get gender values for current language
-  const genderValues = [
+  const genderValues: string[] = [
     translations.ru.personalData.male,
     translations.ru.personalData.female,
     translations.uz.personalData.male,
@@ -20,7 +20,7 @@ export const createMedicalFormSchema = (language: Language = "ru") => {
     passport: z.string().min(5, t.validation.passportRequired),
     birthDate: z.string().min(1, t.validation.birthDateRequired),
     gender: z.string().refine(
-      (val) => val && genderValues.includes(val),
+      (val): val is string => val !== undefined && val !== null && genderValues.includes(val),
       {
         message: t.validation.genderRequired,
       }
